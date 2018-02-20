@@ -57,7 +57,7 @@ notifications.count = function(req, res){
         endDate = new Date(endDate*1000);
 
     whereObj.datetime = { $gte: startDate, $lte: endDate };
-    if (req.body.user_id === undefined || req.body.user_id === '') whereObj.user_id = req.body.user_id;
+    if (req.body.user_id !== undefined && req.body.user_id !== '') whereObj.user_id = req.body.user_id;
     Notification.count(whereObj,function (err,count) {
         if (err) return res.status(400).json({message:err.message});
         return res.status(200).json({message: `Finded ${count} rows`,result:count});

@@ -8,8 +8,7 @@ const NotificationSchema = new Schema({
     },
     notification_id: {
         type:String,
-        required: true,
-        unique: true
+        required: true
     },
     datetime: {
         type: Date,

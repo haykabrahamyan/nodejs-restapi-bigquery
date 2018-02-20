@@ -7,6 +7,7 @@ npm install
 npm start
 ```
 after start you will run node server on 3000 port, which can be easily changed from the server.js
+use this url to create/get segments http://localhost:3000/api/v1/segments (Method: GET)
 # token & request security
 Request url - http://localhost:3000/api/v1/{method} <br/>
 Request header - use 'Content-Type' header with value 'application/x-www-form-urlencoded'
@@ -54,14 +55,10 @@ POST
 
 Data Params
 
- "segments" :  [
-               {"_id":"5a607647e25b653351db0e7d","userid":"11","__v":0},
-               {"_id":"5a608fa8e25b653351db0e7e","userid":"112","__v":0},
-               {"_id":"5a608fa8e25b653351db0e7f","userid":"113","__v":0},
-               {"_id":"5a608fa8e25b653351db0e80","userid":"114","__v":0},
-               {"_id":"5a608fa8e25b653351db0e81","userid":"115","__v":0}
-             ],
- "datetime": 1518970200(unix_timestamp)
+ "segments" :  ["5a607647e25b653351db0e7d","5a608fa8e25b653351db0e7e","5a608fa8e25b653351db0e7e"], /required
+ "template_id": "test1", /required
+ "template_values" : "{"text":"sagar"}"
+ "datetime": 1518970200(unix_timestamp) /required
 
 Success Response:
 
@@ -103,7 +100,7 @@ Content: {
          }
 
 #Update notification
-Returns json data updated notification.
+Returns json data created notification.
 
 URL
 
@@ -111,7 +108,7 @@ URL
 
 Method:
 
-PUT
+POST
 
 Data Params
 
@@ -123,7 +120,7 @@ Success Response:
 
 Code: 200 
 Content: {
-             "message": "Updated successfully.",
+             "message": "Row was inserted successfully.",
              "results": {
                  "notification_id": "not15189721200",
                  "user_id": "112",
@@ -144,7 +141,7 @@ Method:
 POST
 
 Data Params
-
+            
  "startDate" :  1518739200,
  "endDate": 1518811200,
  "user_id": 11

@@ -7,7 +7,6 @@ npm install
 npm start
 ```
 after start you will run node server on 3000 port, which can be easily changed from the server.js
-use this url to create/get segments http://localhost:3000/api/v1/segments (Method: GET)
 # token & request security
 Request url - http://localhost:3000/api/v1/{method} <br/>
 Request header - use 'Content-Type' header with value 'application/x-www-form-urlencoded'
@@ -55,7 +54,7 @@ POST
 
 Data Params
 
- "segments" :  ["5a607647e25b653351db0e7d","5a608fa8e25b653351db0e7e","5a608fa8e25b653351db0e7e"], /required
+ "segments" :  ["1000","12345","55478"], /required
  "template_id": "test1", /required
  "template_values" : "{"text":"sagar"}"
  "datetime": 1518970200(unix_timestamp) /required

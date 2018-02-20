@@ -47,21 +47,21 @@ notifications.index = function(req, res){
 };
 
 notifications.count = function(req, res){
-    if (req.body.startDate === undefined || req.body.startDate === '' || req.body.endDate === undefined || req.body.endDate === '' || req.body.user_id === undefined || req.body.user_id === '')
+    if (req.body.startDate === undefined || req.body.startDate === '' || req.body.endDate === undefined || req.body.endDate === '')
         return res.status(400).json({ message: "Validation Failed! All fields are required('startDate','endDate','notification_id')."});
 
+    let whereObj = {};
     let startDate = req.body.startDate;
         startDate = new Date(startDate*1000);
     let endDate = req.body.endDate;
         endDate = new Date(endDate*1000);
-    let user_id = req.body.user_id;
 
-    Notification.count({user_id:user_id, datetime:{ $gte: startDate, $lte: endDate }},function (err,count) {
+    whereObj.datetime = { $gte: startDate, $lte: endDate };
+    if (req.body.user_id === undefined || req.body.user_id === '') whereObj.user_id = req.body.user_id;
+    Notification.count(whereObj,function (err,count) {
         if (err) return res.status(400).json({message:err.message});
         return res.status(200).json({message: `Finded ${count} rows`,result:count});
     });
-
-
 };
 
 notifications.store = function(req, res){
@@ -78,58 +78,63 @@ notifications.store = function(req, res){
         template_values = req.body.template_values;
 
     let notificationsArr = [];
+    let userIDArr = [];
     let found = 0;
     segments.forEach(function (value,key) {
         Segment.findById(value,function (err,segment) {
             if (err) return;
             found++;
             segment.user.forEach(function (val,k) {
-                let notification_id = 'not'+Math.floor(Date.now() / 1000)+key+k;
-                let notification = {
-                    user_id: val.userid,
-                    notification_id: notification_id,
-                    datetime: date,
-                    notification_action: 'sent'
-                };
-                Notification.create(notification,function (err,result) {
-                    if (err) return res.status(400).json({message: err.message});
-                    notificationsArr.push(notification);
-                    if(key === segments.length-1 && k === segment.user.length-1 ) {
-                        bigquery
-                            .dataset(datasetId)
-                            .table(tableId)
-                            .insert(notificationsArr)
-                            .then(() => {
-                                notificationsArr.forEach(function (value,key) {
-                                    let reqObj = {
-                                        uid:value.user_id,
-                                        template_id:template_id,
-                                        template_values: template_values,
-                                        notification_id:value.notification_id,
-                                        time:datetime
-                                    };
-                                    let opt = JSON.parse(JSON.stringify(options));
-                                    opt.form = reqObj;
-                                    doRequest(opt,function (response) {
-                                        console.log(response);
+                if (userIDArr.indexOf(val.userid) === -1) {
+                    userIDArr.push(val.userid);
+                    let notification_id = 'not'+Math.floor(Date.now() / 1000)+key+k;
+                    let notification = {
+                        user_id: val.userid,
+                        notification_id: notification_id,
+                        datetime: date,
+                        notification_action: 'sent'
+                    };
+                    Notification.create(notification,function (err,result) {
+                        if (err) return res.status(400).json({message: err.message});
+                        notificationsArr.push(notification);
+                        if(key === segments.length-1 && k === segment.user.length-1 ) {
+                            bigquery
+                                .dataset(datasetId)
+                                .table(tableId)
+                                .insert(notificationsArr)
+                                .then(() => {
+                                    notificationsArr.forEach(function (value,key) {
+                                        let reqObj = {
+                                            uid:value.user_id,
+                                            template_id:template_id,
+                                            template_values: template_values,
+                                            notification_id:value.notification_id,
+                                            time:datetime
+                                        };
+                                        let opt = JSON.parse(JSON.stringify(options));
+                                        opt.form = reqObj;
+                                        doRequest(opt,function (response) {
+                                            console.log(response);
+                                        });
+                                        if ( key === notificationsArr.length-1) {
+                                            return res.status(201).json({message: `Inserted ${notificationsArr.length} rows`, result: notificationsArr});
+                                        }
                                     });
-                                    if ( key === notificationsArr.length-1) {
-                                        return res.status(201).json({message: `Inserted ${notificationsArr.length} rows`, result: notificationsArr});
+                                })
+                                .catch(err => {
+                                    if (err && err.name === 'PartialFailureError') {
+                                        if (err.errors && err.errors.length > 0) {
+                                            console.log('Insert errors:');
+                                            err.errors.forEach(err => console.error(err));
+                                        }
+                                    } else {
+                                        console.error('ERROR:', err);
                                     }
                                 });
-                            })
-                            .catch(err => {
-                                if (err && err.name === 'PartialFailureError') {
-                                    if (err.errors && err.errors.length > 0) {
-                                        console.log('Insert errors:');
-                                        err.errors.forEach(err => console.error(err));
-                                    }
-                                } else {
-                                    console.error('ERROR:', err);
-                                }
-                            });
-                    }
-                });
+                        }
+                    });
+                }
+
             });
 
         });
